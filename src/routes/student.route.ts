@@ -1,6 +1,6 @@
 import express from 'express';
 import { studentModel } from './../schemas/student.schema';
-import { principalPermission, principalOrSupervisorPermission } from './../permission/staff.permission'
+import { createPermission, updatePermission, deletePermission } from './../permission/staff.permission'
 
 export const studentRouter = express.Router();
 
@@ -22,7 +22,7 @@ studentRouter.get('/student/:id', async (req, res)=>{
     })
 })
 
-studentRouter.post('/', principalPermission, async (req, res)=>{
+studentRouter.post('/', createPermission, async (req, res)=>{
     const student = new studentModel(req.body);
     try{
         await student.save();
@@ -32,7 +32,7 @@ studentRouter.post('/', principalPermission, async (req, res)=>{
     }
 })
 
-studentRouter.put('/student/:id', principalOrSupervisorPermission, async (req, res)=>{
+studentRouter.put('/student/:id', updatePermission, async (req, res)=>{
     const studentId = req.params.id;
     const newData = req.body;
     studentModel.findByIdAndUpdate({_id: studentId}, newData, {new: true}).then((data)=>{
@@ -42,7 +42,7 @@ studentRouter.put('/student/:id', principalOrSupervisorPermission, async (req, r
     })
 })
 
-studentRouter.delete('/student/:id', principalPermission, async (req, res)=>{
+studentRouter.delete('/student/:id', deletePermission, async (req, res)=>{
     const studentId = req.params.id;
     studentModel.findByIdAndDelete({_id: studentId}).then((data)=>{
         res.send(data);

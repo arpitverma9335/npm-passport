@@ -3,8 +3,15 @@ import { staffModel } from '../schemas/staff.schema';
 import { hashSync } from 'bcrypt';
 import passport from 'passport';
 import { isAunthenticated } from '../permission/staff.permission';
+import jwt from 'jsonwebtoken';
+import { principalPermission, supervisorPermission, teacherPermission } from './../constants/permission.constant';
+import { config } from 'dotenv';
+
+config();
 
 export const staffRouter = express.Router();
+
+const secretTokenKey = process.env.TOKEN_SECRET ? process.env.TOKEN_SECRET: 'secret-key';
 
 staffRouter.get('/', async (req, res) => {
     staffModel.find({}).then((members) => {
@@ -40,7 +47,23 @@ staffRouter.post('/', async (req, res) => {
 });
 
 staffRouter.post('/login', passport.authenticate('local', { failureRedirect: ``, failureMessage: true}), (req, res) => {
-    return res.status(201).send("You are logged in successfully!")
+    try{
+        const user: any = req.user;
+        let token: string;
+        if (user?.designation === 'principal'){
+            token = jwt.sign({permissions: principalPermission}, secretTokenKey)
+        } else if (user?.designation === 'supervisor'){
+            token = jwt.sign({permissions: supervisorPermission}, secretTokenKey)
+        } else if (user?.designation === 'teacher'){
+            token = jwt.sign({permissions: teacherPermission}, secretTokenKey)
+        } else{
+            throw new Error('Invalid user!')
+        }
+        return res.status(201).send({message: "You are logged in successfully!", details: user, token: token})
+    }
+    catch(err){
+        return res.status(401).send(err)
+    }
 });
 
 staffRouter.post('/logout', isAunthenticated, (req, res)=>{
